@@ -1,0 +1,16 @@
+name: build
+on: [push, workflow_dispatch]
+jobs:
+  ipa:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen && xcodegen generate
+      - run: xcodebuild -project PhoneVoice.xcodeproj -scheme PhoneVoice -destination generic/platform=iOS -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tail -3
+      - run: mkdir Payload && cp -r build/Build/Products/Debug-iphoneos/PhoneVoice.app Payload && zip -qr PhoneVoice.ipa Payload
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          files: PhoneVoice.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
