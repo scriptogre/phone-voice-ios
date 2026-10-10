@@ -9,6 +9,16 @@ final class Mic: ObservableObject {
     @Published var heard = ""
     private let engine = AVAudioEngine()
     private var ws: URLSessionWebSocketTask?
+    private var rate = 48000
+
+    // Server restarts or network switches drop the socket; reconnect forever, mic keeps running.
+    private func connect() {
+        ws?.cancel()
+        ws = URLSession.shared.webSocketTask(with: URL(string: "wss://phone.christiantanul.com/ws")!)
+        ws?.resume()
+        ws?.send(.string("{\"rate\":\(rate)}")) { _ in }
+        receive()
+    }
 
     func start() {
         let session = AVAudioSession.sharedInstance()
@@ -18,10 +28,8 @@ final class Mic: ObservableObject {
         let fmt = input.outputFormat(forBus: 0)
         let out = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: fmt.sampleRate, channels: 1, interleaved: true)!
         let conv = AVAudioConverter(from: fmt, to: out)!
-        ws = URLSession.shared.webSocketTask(with: URL(string: "wss://phone.christiantanul.com/ws")!)
-        ws?.resume()
-        ws?.send(.string("{\"rate\":\(Int(fmt.sampleRate))}")) { _ in }
-        receive()
+        rate = Int(fmt.sampleRate)
+        connect()
         input.installTap(onBus: 0, bufferSize: 4096, format: fmt) { [weak self] buf, _ in
             let pcm = AVAudioPCMBuffer(pcmFormat: out, frameCapacity: buf.frameLength)!
             var given = false
@@ -40,7 +48,9 @@ final class Mic: ObservableObject {
         ws?.receive { [weak self] r in
             guard case .success(.string(let s)) = r,
                   let m = try? JSONSerialization.jsonObject(with: Data(s.utf8)) as? [String: Any] else {
-                DispatchQueue.main.async { self?.status = "disconnected" }; return
+                DispatchQueue.main.async { self?.status = "reconnecting" }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self?.connect(); self?.status = "Listening" }
+                return
             }
             DispatchQueue.main.async {
                 if let h = m["heard"] as? String { self?.heard = h }
