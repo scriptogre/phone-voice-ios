@@ -17,12 +17,13 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.christiantanul.phonevoice
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     info:
       path: Info.plist
       properties:
         CFBundleDisplayName: Jev Remote Control
         CFBundleShortVersionString: '0.1'
-        CFBundleVersion: '2'
+        CFBundleVersion: '3'
         UILaunchScreen: {}
         UIBackgroundModes: [audio]
         NSMicrophoneUsageDescription: Stream your voice to the phone controller.
