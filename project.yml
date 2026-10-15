@@ -20,9 +20,9 @@ targets:
     info:
       path: Info.plist
       properties:
-        CFBundleDisplayName: Phone Voice
+        CFBundleDisplayName: Jev Remote Control
         CFBundleShortVersionString: '0.1'
-        CFBundleVersion: '1'
+        CFBundleVersion: '2'
         UILaunchScreen: {}
         UIBackgroundModes: [audio]
         NSMicrophoneUsageDescription: Stream your voice to the phone controller.
